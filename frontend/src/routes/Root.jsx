@@ -1,36 +1,22 @@
 import { Outlet } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
-import { logout } from '../services/auth.service';
-import { AuthProvider, useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 
-function Root() {
-  return (
-    <AuthProvider>
-      <PageRoot />
-    </AuthProvider>
-  );
-}
+const Root = () => {
+  const { isAuthenticated, logout } = useAuth(); // Usa el contexto correctamente
 
-function PageRoot() {
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/auth');
-  };
-
-  const { user } = useAuth();
+  if (!isAuthenticated) {
+    return <p>Redirigiendo al inicio de sesión...</p>; // Evita renderizar nada si no está autenticado
+  }
 
   return (
     <div>
-      <div>
-        <h1>Aqui deberia ir un header</h1>
-        <p>Estas logeado como: {user.email}</p>
-        <button onClick={handleLogout}>Cerrar sesion</button>
-      </div>
-      <Outlet />
+      <header>
+        <h1>Gestión de Trabajadores</h1>
+        <button onClick={logout}>Cerrar Sesión</button>
+      </header>
+      <Outlet /> {/* Renderiza las rutas hijas */}
     </div>
   );
-}
+};
 
 export default Root;

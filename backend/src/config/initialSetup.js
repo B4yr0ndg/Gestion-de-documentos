@@ -53,7 +53,7 @@ async function createUsers() {
         email: "admin@email.com",
         rut: "12345678-0",
         password: await User.encryptPassword("admin123"),
-        roles: admin._id,
+        roles: [admin._id],
       }).save(),
     ]);
     console.log("* => Users creados exitosamente");

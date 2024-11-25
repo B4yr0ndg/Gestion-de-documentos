@@ -15,6 +15,8 @@ import { setupDB } from "./config/configDB.js";
 // Importa el handler de errores
 import { handleFatalError, handleError } from "./utils/errorHandler.js";
 import { createRoles, createUsers } from "./config/initialSetup.js";
+import "./config/archivingJob.js"; // Importa el archivo de cron para que se ejecute automáticamente
+
 
 /**
  * Inicia el servidor web
