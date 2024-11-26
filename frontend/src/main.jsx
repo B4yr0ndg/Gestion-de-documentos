@@ -8,7 +8,9 @@ import WorkersPage from './routes/WorkersPage.jsx';
 import WorkerForm from './components/WorkerForm.jsx';
 import WorkerTable from './components/WorkerTable.jsx';
 import WorkerDetails from './routes/WorkerDetails.jsx';
-import { AuthProvider } from './context/AuthContext'; // Importa el AuthProvider
+import { AuthProvider } from './context/AuthContext'; 
+import HomePage from './routes/HomePage.jsx';
+// Importa el AuthProvider
 
 const router = createBrowserRouter([
   {
@@ -20,7 +22,7 @@ const router = createBrowserRouter([
     ),
     errorElement: <ErrorPage />,
     children: [
-      { path: '/', element: <WorkersPage /> }, // Página principal
+      { path: '/home', element: <HomePage /> }, // Página principal
       { path: '/workers', element: <WorkersPage /> }, // Página de gestión
       { path: '/workers/create', element: <WorkerForm /> },
       { path: '/workers/list', element: <WorkerTable /> },

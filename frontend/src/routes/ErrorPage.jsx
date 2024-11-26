@@ -12,7 +12,7 @@ const ErrorPage = () => {
           {error.statusText || error.message || 'Error desconocido'}
         </strong>
       </p>
-      <a href="/">Volver al inicio</a>
+      <a href="/home">Volver al inicio</a>
     </div>
   );
 };

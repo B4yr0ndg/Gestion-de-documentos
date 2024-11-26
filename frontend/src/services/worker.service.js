@@ -22,24 +22,25 @@ export const getWorkerById = async (id) => {
   }
 };
 
-export const createWorker = async (worker) => {
+export const createWorker = async (workerData) => {
   try {
-    const { data } = await axios.post('/workers', worker);
-    return data.data;
+    console.log('Creando nuevo trabajador:', workerData);
+    const { data } = await axios.post('/workers', workerData);
+    return data;
   } catch (error) {
     console.error('Error al crear trabajador:', error.response?.data?.message || error.message);
-    return null;
+    throw new Error(error.response?.data?.message || 'Error al crear el trabajador');
   }
 };
 
 export const updateWorker = async (id, workerData) => {
   try {
-    console.log('Actualizando trabajador con ID:', id, workerData); // Log para depuración
+    console.log('Actualizando trabajador con ID:', id, workerData);
     const { data } = await axios.put(`/workers/${id}`, workerData);
     return data;
   } catch (error) {
     console.error('Error al actualizar trabajador:', error.response?.data?.message || error.message);
-    throw error;
+    throw new Error(error.response?.data?.message || 'Error al actualizar el trabajador');
   }
 };
 
