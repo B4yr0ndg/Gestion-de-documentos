@@ -16,7 +16,8 @@ import { setupDB } from "./config/configDB.js";
 import { handleFatalError, handleError } from "./utils/errorHandler.js";
 import { createRoles, createUsers } from "./config/initialSetup.js";
 import "./config/archivingJob.js"; // Importa el archivo de cron para que se ejecute automáticamente
-
+import path from "path";
+import { fileURLToPath } from "url";
 
 /**
  * Inicia el servidor web
@@ -36,6 +37,17 @@ async function setupServer() {
     server.use(cookieParser());
     // Agregamos morgan para ver las peticiones que se hacen al servidor
     server.use(morgan("dev"));
+
+    // Obtener el directorio actual
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+
+    // Ruta completa al directorio 'uploads' (si está fuera de la carpeta 'src')
+    const uploadsPath = path.resolve(__dirname, "..", "uploads");
+
+    // Middleware para servir archivos estáticos desde 'uploads'
+    server.use("/uploads", express.static(uploadsPath));
+
     // Agrega el enrutador principal al servidor
     server.use("/api", indexRoutes);
 

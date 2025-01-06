@@ -1,17 +1,15 @@
 "use strict";
 import Document from "../models/document.model.js";
+import Worker from "../models/worker.model.js";
 import { handleError } from "../utils/errorHandler.js";
 
 /**
  * Sube un nuevo documento
- * @param {Object} data - Datos del documento
  */
 async function uploadDocument(data) {
   try {
-    console.log("Service uploadDocument - data:", data); // DEBUG
-
-    const newDocument = new Document(data); // Aquí `data` debe incluir `uploadedBy`
-    await newDocument.save();
+    const newDocument = new Document(data); // Crea el documento con los datos proporcionados
+    await newDocument.save(); // Guarda el documento en la base de datos
     return [newDocument, null];
   } catch (error) {
     handleError(error, "document.service -> uploadDocument");
@@ -22,11 +20,10 @@ async function uploadDocument(data) {
 
 /**
  * Obtiene un documento por su ID
- * @param {String} id - ID del documento
  */
 async function getDocument(id) {
   try {
-    const document = await Document.findById(id).exec();
+    const document = await Document.findById(id).populate("uploadedBy").exec();
     if (!document) return [null, "Documento no encontrado"];
     return [document, null];
   } catch (error) {
@@ -37,8 +34,6 @@ async function getDocument(id) {
 
 /**
  * Actualiza un documento por su ID
- * @param {String} id - ID del documento
- * @param {Object} data - Datos a actualizar
  */
 async function updateDocument(id, data) {
   try {
@@ -53,7 +48,6 @@ async function updateDocument(id, data) {
 
 /**
  * Elimina un documento por su ID
- * @param {String} id - ID del documento
  */
 async function deleteDocument(id) {
   try {
@@ -68,54 +62,71 @@ async function deleteDocument(id) {
 
 /**
  * Realiza una búsqueda avanzada de documentos
- * @param {Object} filters - Filtros para la búsqueda
  */
-async function searchDocuments(filters) {
+async function searchDocuments({ title, type, startDate, endDate, keywords }) {
   try {
-    const { title, type, startDate, endDate, keywords, booleanOperator } = filters;
-
     const query = {};
 
     if (title) query.title = { $regex: title, $options: "i" };
     if (type) query.type = type;
-    if (startDate || endDate) query.uploadDate = {};
-    if (startDate) query.uploadDate.$gte = new Date(startDate);
-    if (endDate) query.uploadDate.$lte = new Date(endDate);
-
+    if (startDate && endDate) {
+      query.uploadDate = { $gte: new Date(startDate), $lte: new Date(endDate) };
+    }
     if (keywords) {
-      const keywordArray = keywords.split(" ");
-      // eslint-disable-next-line max-len
-      const keywordQuery = keywordArray.map((keyword) => ({ description: { $regex: keyword, $options: "i" } }));
-
-      if (booleanOperator === "AND") {
-        query.$and = keywordQuery;
-      } else if (booleanOperator === "OR") {
-        query.$or = keywordQuery;
-      } else if (booleanOperator === "NOT") {
-        query.$nor = keywordQuery;
-      }
+      const keywordRegex = new RegExp(keywords, "i");
+      query.$or = [
+        { title: { $regex: keywordRegex } },
+        { description: { $regex: keywordRegex } },
+      ];
     }
 
     const documents = await Document.find(query).exec();
     return [documents, null];
   } catch (error) {
     handleError(error, "document.service -> searchDocuments");
-    return [null, "Error en la búsqueda de documentos"];
+    return [null, "Error en la búsqueda avanzada"];
+  }
+}
+
+/**
+ * Realiza una búsqueda combinada de trabajadores y documentos
+ */
+async function searchAll(query) {
+  try {
+    const regexQuery = { $regex: query, $options: "i" };
+
+    const documents = await Document.find({
+      $or: [
+        { title: regexQuery },
+        { description: regexQuery },
+        { type: regexQuery },
+      ],
+    }).exec();
+
+    const workers = await Worker.find({
+      $or: [
+        { name: regexQuery },
+        { position: regexQuery },
+        { identificationNumber: regexQuery },
+      ],
+    }).exec();
+
+    return [{ documents, workers }, null];
+  } catch (error) {
+    handleError(error, "document.service -> searchAll");
+    return [null, "Error en la búsqueda combinada"];
   }
 }
 
 /**
  * Archiva un documento por su ID
- * @param {String} id - ID del documento
  */
 async function archiveDocument(id) {
   try {
     const document = await Document.findById(id).exec();
     if (!document) return [null, "Documento no encontrado"];
-
     document.archived = true;
     await document.save();
-
     return [document, null];
   } catch (error) {
     handleError(error, "document.service -> archiveDocument");
@@ -129,6 +140,6 @@ export default {
   updateDocument,
   deleteDocument,
   searchDocuments,
+  searchAll, // Nueva función de búsqueda combinada
   archiveDocument,
 };
-

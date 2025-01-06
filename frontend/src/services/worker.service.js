@@ -12,12 +12,12 @@ export const getWorkers = async () => {
 };
 
 export const getWorkerById = async (id) => {
-  console.log('Llamando al backend con ID:', id); // Log para confirmar el ID
   try {
     const { data } = await axios.get(`/workers/${id}`);
+    console.log("Datos del trabajador:", data.data); // Asegúrate de que incluya documentos
     return data.data;
   } catch (error) {
-    console.error('Error al obtener trabajador:', error.message);
+    console.error("Error al obtener trabajador:", error.message);
     throw error;
   }
 };
@@ -55,3 +55,5 @@ export const deleteWorker = async (id) => {
     throw error;
   }
 };
+
+

@@ -1,23 +1,19 @@
 "use strict";
+
 import { Schema, model } from "mongoose";
 
 const workerSchema = new Schema(
   {
     name: { type: String, required: true },
-    identificationNumber: { type: String, required: true, unique: true },
+    identificationNumber: { type: String, unique: true, required: true },
     position: { type: String, required: true },
-    documents: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "Document",
-      },
-    ], // Lista de documentos asociados al trabajador
+    documents: [{ type: Schema.Types.ObjectId, ref: "Document" }], // Relación con Document
   },
-  {
-    versionKey: false,
-  },
+  { timestamps: true },
 );
+
 
 const Worker = model("Worker", workerSchema);
 
 export default Worker;
+

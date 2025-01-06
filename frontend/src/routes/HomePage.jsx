@@ -1,45 +1,38 @@
-import '../styles.css'; // Importa los estilos que vamos a crear
-import { useNavigate } from 'react-router-dom';
+import AdvancedSearch from "../components/AdvancedSearch";
+import { useNavigate } from "react-router-dom";
 
 const HomePage = () => {
   const navigate = useNavigate();
 
-  // Función para manejar navegación
-  const handleWorkers = () => {
-    navigate('/workers/list'); // Navega a la gestión de trabajadores
-  };
-
-  const handleDocuments = () => {
-    navigate('/documents/list'); // Navega a la gestión de documentos
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('token'); // Limpia el token de autenticación
-    navigate('/auth'); // Redirige al login
-  };
-
   return (
     <div className="homepage">
-      {/* Header con título */}
       <header className="header">
         <h1>Wolf y Compañía Limitada</h1>
       </header>
-
-      {/* Contenedor principal */}
       <div className="info-container">
-        {/* Información de la empresa */}
         <div className="info">
           <p><strong>Razón Social:</strong> Wolf y Compañía Limitada</p>
           <p><strong>Rut:</strong> 78768630-3</p>
           <p><strong>Dirección:</strong> Avenida Argentina 223 Of. San Vicen, Talcahuano</p>
           <p><strong>Teléfono:</strong> (56-41) 2557069</p>
         </div>
-
-        {/* Opciones */}
+        <AdvancedSearch /> {/* Componente de búsqueda avanzada */}
         <div className="options">
-        <button onClick={() => navigate('/workers')}>Gestión de Trabajadores</button>
-          <button onClick={handleDocuments}>Gestión de Documentos</button>
-          <button onClick={handleLogout} style={{ backgroundColor: '#ff4d4d' }}>Cerrar Sesión</button>
+          <button className="btn-primary" onClick={() => navigate("/workers")}>
+            Gestión de Trabajadores
+          </button>
+          <button className="btn-primary" onClick={() => navigate("/documents/list")}>
+            Gestión de Documentos
+          </button>
+          <button
+            className="btn-secondary"
+            onClick={() => {
+              localStorage.removeItem("token");
+              navigate("/auth");
+            }}
+          >
+            Cerrar Sesión
+          </button>
         </div>
       </div>
     </div>
@@ -47,3 +40,4 @@ const HomePage = () => {
 };
 
 export default HomePage;
+

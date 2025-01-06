@@ -1,37 +1,49 @@
+/* eslint-disable require-jsdoc */
 "use strict";
 
 import DocumentService from "../services/document.service.js";
+import WorkerService from "../services/worker.service.js";
 import { respondSuccess, respondError } from "../utils/resHandler.js";
 import { handleError } from "../utils/errorHandler.js";
-import { documentBodySchema } from "../schema/document.schema.js";
+import { documentBodySchema, documentIdSchema } from "../schema/document.schema.js";
+import Document from "../models/document.model.js";
+// import Worker from "../models/worker.model.js"; // Importa el modelo Worker
+
 
 /**
- * Sube un nuevo documento con archivo adjunto
+ * Sube un nuevo documento con archivo adjunto y lo asocia a un trabajador
  */
+
 async function uploadDocument(req, res) {
   try {
-    if (!req.file) return respondError(req, res, 400, "Archivo no proporcionado");
+    if (!req.file) {
+      return respondError(req, res, 400, "Archivo no proporcionado");
+    }
 
-    const { error } = documentBodySchema.validate(req.body);
-    if (error) return respondError(req, res, 400, error.details[0].message);
+    const { title, description, type, expirationDate, worker } = req.body;
 
-    const { title, description, type, expirationDate } = req.body;
-    const uploadedBy = req.userId; // ID del usuario autenticado
-    const fileUrl = `/uploads/${req.file.filename}`; // Ruta relativa del archivo cargado
+    const fileUrl = `/uploads/${req.file.filename}`;
 
-    console.log("Controller uploadDocument - uploadedBy:", uploadedBy); // DEBUG
-
-    // Llamar al servicio para guardar el documento
-    const [newDocument, dbError] = await DocumentService.uploadDocument({
+    // Crea el documento
+    const documentData = {
       title,
       description,
       type,
-      fileUrl,
       expirationDate,
-      uploadedBy, // Este campo debe estar presente
-    });
+      fileUrl,
+      uploadedBy: req.userId,
+      worker, // Asegúrate de que worker sea el ID del trabajador
+    };
 
+    const [newDocument, dbError] = await DocumentService.uploadDocument(documentData);
     if (dbError) return respondError(req, res, 400, dbError);
+
+    // Si se proporciona un trabajador, actualiza su lista de documentos
+    if (worker) {
+      // eslint-disable-next-line max-len, no-unused-vars
+      const [updatedWorker, workerError] = await WorkerService.linkDocumentToWorker(worker, newDocument._id);
+      if (workerError) return respondError(req, res, 400, workerError);
+    }
 
     respondSuccess(req, res, 201, newDocument);
   } catch (error) {
@@ -48,16 +60,17 @@ async function getDocument(req, res) {
     const { error } = documentIdSchema.validate(req.params);
     if (error) return respondError(req, res, 400, error.details[0].message);
 
-    const [document, dbError] = await DocumentService.getDocument(req.params.id);
-
-    if (dbError) return respondError(req, res, 404, dbError);
+    // Buscar documento con información del trabajador asociado
+    const document = await Document.findById(req.params.id).populate("worker").exec();
+    if (!document) return respondError(req, res, 404, "Documento no encontrado");
 
     respondSuccess(req, res, 200, document);
   } catch (error) {
     handleError(error, "document.controller -> getDocument");
-    respondError(req, res, 500, "Error al obtener el documento");
+    respondError(req, res, 500, error.message || "Error al obtener el documento");
   }
 }
+
 
 /**
  * Actualiza un documento por su ID
@@ -123,12 +136,43 @@ async function searchDocuments(req, res) {
       booleanOperator,
     });
 
-    if (error) return respondError(req, res, 400, error);
+    if (error) {
+      return respondError(req, res, 400, error);
+    }
 
     respondSuccess(req, res, 200, documents);
   } catch (error) {
     handleError(error, "document.controller -> searchDocuments");
     respondError(req, res, 500, "Error en la búsqueda de documentos");
+  }
+}
+
+/**
+ * Realiza una búsqueda combinada de documentos y trabajadores
+ */
+async function searchAll(req, res) {
+  try {
+    const { query } = req.query;
+
+    if (!query) return respondError(req, res, 400, "La consulta no puede estar vacía");
+
+    // Buscar en documentos
+    const [documents, docError] = await DocumentService.searchDocuments({
+      title: query,
+      description: query,
+    });
+
+    // Buscar en trabajadores
+    const [workers, workerError] = await WorkerService.searchWorkers({ query });
+
+    if (docError || workerError) {
+      return respondError(req, res, 500, "Error en la búsqueda combinada");
+    }
+
+    respondSuccess(req, res, 200, { documents, workers });
+  } catch (error) {
+    handleError(error, "document.controller -> searchAll");
+    respondError(req, res, 500, "Error en la búsqueda combinada");
   }
 }
 
@@ -157,5 +201,6 @@ export default {
   updateDocument,
   deleteDocument,
   searchDocuments,
+  searchAll, // Añadida nueva función
   archiveDocument,
 };

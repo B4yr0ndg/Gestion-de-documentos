@@ -99,10 +99,49 @@ async function deleteWorker(req, res) {
   }
 }
 
+/**
+ * Liga un documento a un trabajador
+ */
+async function linkDocument(req, res) {
+  try {
+    const { workerId, documentId } = req.body;
+
+    const [worker, error] = await WorkerService.linkDocumentToWorker(workerId, documentId);
+
+    if (error) return respondError(req, res, 400, error);
+
+    respondSuccess(req, res, 200, worker);
+  } catch (error) {
+    handleError(error, "worker.controller -> linkDocument");
+    respondError(req, res, 500, "Error al ligar el documento al trabajador");
+  }
+}
+
+/**
+ * Obtiene una lista de trabajadores a quienes no se les ha asociado un documento específico
+ */
+async function getWorkersWithoutDocument(req, res) {
+  try {
+    const { documentId } = req.params;
+
+    const [workers, dbError] = await WorkerService.getWorkersWithoutDocument(documentId);
+
+    if (dbError) return respondError(req, res, 500, dbError);
+
+    respondSuccess(req, res, 200, workers);
+  } catch (error) {
+    handleError(error, "worker.controller -> getWorkersWithoutDocument");
+    respondError(req, res, 500, "Error al obtener trabajadores sin el documento");
+  }
+}
+
+
 export default {
   createWorker,
   getWorkers,
   getWorkerById,
   updateWorker,
   deleteWorker,
+  linkDocument,
+  getWorkersWithoutDocument,
 };

@@ -17,6 +17,9 @@ import documentRoutes from "./document.route.js";
 // Importa el enrutador de trabajadores
 import workerRoutes from "./worker.route.js";
 
+// Importa el controlador de búsqueda combinada
+import { searchAll } from "../controllers/search.controller.js";
+
 /** Instancia del enrutador */
 const router = Router();
 
@@ -30,6 +33,8 @@ router.use("/documents", documentRoutes);
 // Define las rutas para los trabajadores /api/trabajadores
 router.use("/workers", workerRoutes);
 
+// Ruta para búsqueda combinada
+router.get("/search", searchAll); // Agrega esta línea
 
 // Exporta el enrutador
 export default router;
